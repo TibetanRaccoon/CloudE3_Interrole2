@@ -21,7 +21,6 @@ namespace Client_App
                 }
 
                 proxy.DoSomethig(input);
-                proxy = null;
             }
         }
     }

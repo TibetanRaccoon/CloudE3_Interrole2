@@ -8,7 +8,7 @@ namespace Client_App
         public static IService_1 GetProxy()
         {
             NetTcpBinding binding = new NetTcpBinding();
-            ChannelFactory<IService_1> channelFactory = new ChannelFactory<IService_1>(binding, new EndpointAddress("net.tcp://127.255.0.0:10100/InputRequest"));
+            ChannelFactory<IService_1> channelFactory = new ChannelFactory<IService_1>(binding, new EndpointAddress("net.tcp://localhost:10100/InputRequest"));
             IService_1 proxy = channelFactory.CreateChannel();
             return proxy;
         }

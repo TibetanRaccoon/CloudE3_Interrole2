@@ -1,5 +1,6 @@
 ﻿using Contracts;
 using Microsoft.WindowsAzure.ServiceRuntime;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.ServiceModel;
@@ -12,35 +13,37 @@ namespace JobWorker
         {
             var id = RoleEnvironment.CurrentRoleInstance.Id;
             var roleCount = RoleEnvironment.Roles.Count;
-            var roles = new List<RoleInstance>();
+            var roles = new Dictionary<int, RoleInstance>();
             var name = "InternalRequest";
+            int targetId;
+            string[] namespaces = id.Split('.');
+            string[] acctualId = namespaces[namespaces.Length - 1].Split('_');
+            Int32.TryParse(acctualId[acctualId.Length - 1], out int currentId);
+
 
             foreach (var role in RoleEnvironment.Roles[RoleEnvironment.CurrentRoleInstance.Role.Name].Instances)
             {
-                roles.Add(role);
+                // Split word to get instances IDs 
+                namespaces = role.Id.Split('.');
+                acctualId = namespaces[namespaces.Length - 1].Split('_');
+                Int32.TryParse(acctualId[acctualId.Length - 1], out int tempId);
+                roles.Add(tempId, role);
             }
 
-            for (int i = 0; i < roles.Count; i++)
-            {
-                if (roles[i].Id == id)
-                {
-                    if (++i > roles.Count - 1)
-                        i = 0;
+            // Incrementing instance id
+            if ((targetId = currentId + 1) == roles.Count)
+                targetId = 0;
 
-                    var binding = new NetTcpBinding();
-                    var endpoint = new EndpointAddress(string.Format("net.tcp://{0}/{1}",
-                                                                roles[i].InstanceEndpoints[name].IPEndpoint,
-                                                                name));
+            Trace.TraceInformation("Recived message:" + someString + ".\nTarget instance id is:" + targetId + "  Curretn id : " + currentId);
+            var binding = new NetTcpBinding();
+            var endpoint = new EndpointAddress(string.Format("net.tcp://{0}/{1}",
+                                                        roles[targetId].InstanceEndpoints[name].IPEndpoint,
+                                                        name));
 
-                    var factory = new ChannelFactory<IService_2>(binding, endpoint);
-                    var proxy = factory.CreateChannel();
+            var factory = new ChannelFactory<IService_2>(binding, endpoint);
+            var proxy = factory.CreateChannel();
 
-                    proxy.DoSomthigElse("\tSender id is: " + id + "Message: " + someString);
-
-
-                    Trace.TraceInformation("Recived message:" + someString + ".\nTarget instance id is:" + i);
-                }
-            }
+            proxy.DoSomthigElse("\tSender id is: " + id + "Message: " + someString);
         }
 
 
